@@ -1,0 +1,75 @@
+.navigation {
+  @apply bg-white h-screen w-64 fixed left-0 top-0 shadow-lg flex flex-col;
+}
+
+.logo {
+  @apply flex items-center px-6 py-4 border-b border-gray-200;
+}
+
+.logo img {
+  @apply h-8 w-8 mr-3;
+}
+
+.logo span {
+  @apply text-xl font-semibold text-gray-800;
+}
+
+.menu {
+  @apply flex-1 py-4 overflow-y-auto;
+}
+
+.menuItem {
+  @apply px-4;
+}
+
+.link {
+  @apply flex items-center px-4 py-3 text-gray-600 rounded-lg transition-colors duration-200;
+}
+
+.link:hover {
+  @apply bg-gray-100 text-gray-900;
+}
+
+.active {
+  @apply bg-primary-50 text-primary-600;
+}
+
+.icon {
+  @apply mr-3;
+}
+
+.icon i {
+  @apply text-xl;
+}
+
+.title {
+  @apply text-sm font-medium;
+}
+
+.footer {
+  @apply px-6 py-4 border-t border-gray-200;
+}
+
+.version {
+  @apply text-xs text-gray-500;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .navigation {
+    @apply w-20;
+  }
+
+  .logo span,
+  .title {
+    @apply hidden;
+  }
+
+  .link {
+    @apply justify-center px-2;
+  }
+
+  .icon {
+    @apply mr-0;
+  }
+} 

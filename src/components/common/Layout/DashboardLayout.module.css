@@ -1,0 +1,24 @@
+.layout {
+  @apply min-h-screen bg-gray-50;
+}
+
+.content {
+  @apply ml-64 min-h-screen;
+}
+
+.main {
+  @apply p-6;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .content {
+    @apply ml-20;
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    @apply p-4;
+  }
+} 
