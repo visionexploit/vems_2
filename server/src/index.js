@@ -7,6 +7,8 @@ const { testConnection } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const studentsRoutes = require('./routes/students');
 const universitiesRoutes = require('./routes/universities');
+const departmentsRoutes = require('./routes/departments');
+const applicationsRoutes = require('./routes/applications');
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.use('/api/test', require('./routes/test'));
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/universities', universitiesRoutes);
+app.use('/api/departments', departmentsRoutes);
+app.use('/api/applications', applicationsRoutes);
 
 // Root route for testing
 app.get('/', (req, res) => {

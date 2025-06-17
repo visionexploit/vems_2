@@ -76,6 +76,10 @@ The Vision Exploit Management System (VEMS) database is designed to manage stude
    - A user can have multiple notifications
    - A notification belongs to one user
 
+8. Students -> Documents (One-to-Many)
+   - A student can have multiple documents
+   - A document belongs to one user
+
 ## Indexes
 
 The database uses the following indexes to optimize query performance:

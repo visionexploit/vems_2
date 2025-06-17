@@ -30,7 +30,7 @@ const Register = () => {
       .oneOf([Yup.ref('password'), null], 'Passwords must match'),
     role: Yup.string()
       .required('Please select a role')
-      .oneOf(['student', 'staff', 'administrator'], 'Invalid role selected'),
+      .oneOf(['student', 'staff', 'admin'], 'Invalid role selected'),
   });
 
   const handleSubmit = async (values, { setSubmitting }) => {
@@ -205,7 +205,7 @@ const Register = () => {
                   >
                     <option value="student">Student</option>
                     <option value="staff">Staff</option>
-                    <option value="administrator">Administrator</option>
+                    <option value="admin">Administrator</option>
                   </Field>
                   <ErrorMessage
                     name="role"

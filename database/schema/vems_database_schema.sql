@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS students (
   nationality VARCHAR(50),
   passport_number VARCHAR(50),
   phone_number VARCHAR(20),
-  address TEXT,
   education_level VARCHAR(50),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -33,25 +32,32 @@ CREATE TABLE IF NOT EXISTS students (
 -- Universities table
 CREATE TABLE IF NOT EXISTS universities (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(200) NOT NULL,
-  country VARCHAR(100) NOT NULL,
-  city VARCHAR(100),
+  name VARCHAR(255) NOT NULL UNIQUE,
+  location VARCHAR(255) NOT NULL,
   website VARCHAR(255),
-  contact_email VARCHAR(100),
-  contact_phone VARCHAR(20),
-  status ENUM('active', 'inactive', 'pending') DEFAULT 'pending',
+  university_type ENUM('public', 'private') NOT NULL,
+  diploma_intake_start DATE,
+  diploma_intake_end DATE,
+  bachelors_intake_start DATE,
+  bachelors_intake_end DATE,
+  masters_intake_start DATE,
+  masters_intake_end DATE,
+  phd_intake_start DATE,
+  phd_intake_end DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Programs table
-CREATE TABLE IF NOT EXISTS programs (
+-- Departments table (formerly Programs table)
+CREATE TABLE IF NOT EXISTS departments (
   id INT PRIMARY KEY AUTO_INCREMENT,
   university_id INT,
-  name VARCHAR(200) NOT NULL,
+  name VARCHAR(200) NOT NULL, -- bolumAd
+  faculty_name VARCHAR(255), -- fakulteAd
   level ENUM('bachelor', 'master', 'phd') NOT NULL,
   duration INT NOT NULL, -- in months
-  tuition_fee DECIMAL(10, 2),
+  tuition_fee DECIMAL(10, 2), -- ucret bilgisi
+  language_of_education VARCHAR(50), -- egitim dili
   description TEXT,
   requirements TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,7 +69,7 @@ CREATE TABLE IF NOT EXISTS programs (
 CREATE TABLE IF NOT EXISTS applications (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_id INT,
-  program_id INT,
+  department_id INT, -- Changed from program_id to department_id
   status ENUM('draft', 'submitted', 'under_review', 'accepted', 'rejected') DEFAULT 'draft',
   submission_date TIMESTAMP NULL,
   review_date TIMESTAMP NULL,
@@ -72,7 +78,7 @@ CREATE TABLE IF NOT EXISTS applications (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
+  FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE -- Updated FK
 );
 
 -- Documents table
@@ -120,7 +126,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_students_user_id ON students(user_id);
 CREATE INDEX idx_applications_student_id ON applications(student_id);
-CREATE INDEX idx_applications_program_id ON applications(program_id);
+CREATE INDEX idx_applications_department_id ON applications(department_id);
 CREATE INDEX idx_documents_application_id ON documents(application_id);
 CREATE INDEX idx_payments_application_id ON payments(application_id);
 CREATE INDEX idx_notifications_user_id ON notifications(user_id); 

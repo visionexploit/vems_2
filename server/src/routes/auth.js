@@ -90,7 +90,7 @@ router.post('/register', [
   body('name').notEmpty().trim(),
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
-  body('role').isIn(['student', 'staff', 'administrator'])
+  body('role').isIn(['student', 'staff', 'admin'])
 ], async (req, res) => {
   try {
     console.log('Registration attempt received:', {
@@ -155,18 +155,21 @@ router.post('/register', [
       });
     } catch (insertError) {
       console.error('Database error inserting user:', {
-        error: insertError,
+        error: insertError.message,
         code: insertError.code,
         sqlMessage: insertError.sqlMessage,
-        sqlState: insertError.sqlState
+        sqlState: insertError.sqlState,
+        stack: insertError.stack
       });
-      throw new Error(`Database error inserting user: ${insertError.sqlMessage}`);
+      throw new Error(`Database insert error: ${insertError.sqlMessage || insertError.message}`);
     }
   } catch (error) {
     console.error('Registration error details:', {
       message: error.message,
       stack: error.stack,
-      code: error.code
+      code: error.code || 'UNKNOWN_ERROR',
+      sqlMessage: error.sqlMessage || '',
+      sqlState: error.sqlState || ''
     });
     res.status(500).json({ 
       error: { 

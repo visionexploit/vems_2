@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const { auth: authenticateToken, checkRole } = require('../middleware/auth');
+const { validateUniversity } = require('../middleware/validation');
 
 // Get all universities
 router.get('/', authenticateToken, async (req, res) => {
@@ -14,120 +15,192 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Add a new university (Admin only)
-router.post('/', authenticateToken, checkRole(['administrator']), async (req, res) => {
+// Add a new university
+router.post('/', validateUniversity, async (req, res) => {
   const {
     name,
-    country,
-    city,
+    location,
     website,
-    contact_email,
-    contact_phone,
-    number_of_students = 0,
-    status = 'pending'
+    university_type,
+    diploma_intake_start,
+    diploma_intake_end,
+    bachelors_intake_start,
+    bachelors_intake_end,
+    masters_intake_start,
+    masters_intake_end,
+    phd_intake_start,
+    phd_intake_end
   } = req.body;
 
-  console.log('Received university data for addition:', req.body);
-
-  if (!name || !country) {
-    console.error('Validation error: Missing required fields (name or country)', req.body);
-    return res.status(400).json({ message: 'University name and country are required.' });
-  }
-
   try {
+    // Check for duplicate university name
+    const [existing] = await pool.query(
+      'SELECT id FROM universities WHERE name = ?',
+      [name]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ message: 'University with this name already exists' });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO universities (
-        name, country, city, website, contact_email, contact_phone, number_of_students, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, country, city, website, contact_email, contact_phone, number_of_students, status]
+        name, location, website, university_type,
+        diploma_intake_start, diploma_intake_end,
+        bachelors_intake_start, bachelors_intake_end,
+        masters_intake_start, masters_intake_end,
+        phd_intake_start, phd_intake_end
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name,
+        location,
+        website,
+        university_type,
+        diploma_intake_start,
+        diploma_intake_end,
+        bachelors_intake_start,
+        bachelors_intake_end,
+        masters_intake_start,
+        masters_intake_end,
+        phd_intake_start,
+        phd_intake_end
+      ]
     );
 
-    const [newUniversity] = await pool.query('SELECT * FROM universities WHERE id = ?', [result.insertId]);
-    console.log('University added successfully:', newUniversity[0]);
-    res.status(201).json(newUniversity[0]);
+    res.status(201).json({
+      id: result.insertId,
+      name,
+      location,
+      website,
+      university_type,
+      diploma_intake_start,
+      diploma_intake_end,
+      bachelors_intake_start,
+      bachelors_intake_end,
+      masters_intake_start,
+      masters_intake_end,
+      phd_intake_start,
+      phd_intake_end
+    });
   } catch (error) {
-    console.error('Error adding university to database:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(400).json({ message: 'University with this name already exists.' });
-    } else {
-      res.status(500).json({ message: 'An unexpected error occurred while adding the university.' });
-    }
+    console.error('Error adding university:', error);
+    res.status(500).json({ message: 'Error adding university' });
   }
 });
 
-// Update a university (Admin only)
-router.put('/:id', authenticateToken, checkRole(['administrator']), async (req, res) => {
+// Update a university
+router.put('/:id', validateUniversity, async (req, res) => {
   const { id } = req.params;
   const {
     name,
-    country,
-    city,
+    location,
     website,
-    contact_email,
-    contact_phone,
-    number_of_students,
-    status
+    university_type,
+    diploma_intake_start,
+    diploma_intake_end,
+    bachelors_intake_start,
+    bachelors_intake_end,
+    masters_intake_start,
+    masters_intake_end,
+    phd_intake_start,
+    phd_intake_end
   } = req.body;
 
-  console.log(`Received university data for update (ID: ${id}):`, req.body);
-
-  if (!name || !country) {
-    console.error('Validation error: Missing required fields for update', req.body);
-    return res.status(400).json({ message: 'University name and country are required for update.' });
-  }
-
   try {
-    const [result] = await pool.query(
-      `UPDATE universities SET
-        name = ?,
-        country = ?,
-        city = ?,
-        website = ?,
-        contact_email = ?,
-        contact_phone = ?,
-        number_of_students = ?,
-        status = ?
-      WHERE id = ?`,
-      [name, country, city, website, contact_email, contact_phone, number_of_students, status, id]
+    // Check if university exists
+    const [existing] = await pool.query(
+      'SELECT id FROM universities WHERE id = ?',
+      [id]
     );
 
-    if (result.affectedRows === 0) {
-      console.log(`University with ID ${id} not found for update.`);
-      return res.status(404).json({ message: 'University not found.' });
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'University not found' });
     }
 
-    const [updatedUniversity] = await pool.query('SELECT * FROM universities WHERE id = ?', [id]);
-    console.log('University updated successfully:', updatedUniversity[0]);
-    res.json(updatedUniversity[0]);
-  } catch (error) {
-    console.error('Error updating university in database:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(400).json({ message: 'University with this name already exists.' });
-    } else {
-      res.status(500).json({ message: 'An unexpected error occurred while updating the university.' });
+    // Check for duplicate name (excluding current university)
+    const [duplicate] = await pool.query(
+      'SELECT id FROM universities WHERE name = ? AND id != ?',
+      [name, id]
+    );
+
+    if (duplicate.length > 0) {
+      return res.status(400).json({ message: 'University with this name already exists' });
     }
+
+    await pool.query(
+      `UPDATE universities SET 
+        name = ?,
+        location = ?,
+        website = ?,
+        university_type = ?,
+        diploma_intake_start = ?,
+        diploma_intake_end = ?,
+        bachelors_intake_start = ?,
+        bachelors_intake_end = ?,
+        masters_intake_start = ?,
+        masters_intake_end = ?,
+        phd_intake_start = ?,
+        phd_intake_end = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?`,
+      [
+        name,
+        location,
+        website,
+        university_type,
+        diploma_intake_start,
+        diploma_intake_end,
+        bachelors_intake_start,
+        bachelors_intake_end,
+        masters_intake_start,
+        masters_intake_end,
+        phd_intake_start,
+        phd_intake_end,
+        id
+      ]
+    );
+
+    res.json({
+      id,
+      name,
+      location,
+      website,
+      university_type,
+      diploma_intake_start,
+      diploma_intake_end,
+      bachelors_intake_start,
+      bachelors_intake_end,
+      masters_intake_start,
+      masters_intake_end,
+      phd_intake_start,
+      phd_intake_end
+    });
+  } catch (error) {
+    console.error('Error updating university:', error);
+    res.status(500).json({ message: 'Error updating university' });
   }
 });
 
-// Delete a university (Admin only)
-router.delete('/:id', authenticateToken, checkRole(['administrator']), async (req, res) => {
+// Delete a university
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
-  console.log(`Received request to delete university with ID: ${id}`);
-
   try {
-    const [result] = await pool.query('DELETE FROM universities WHERE id = ?', [id]);
+    // Check if university exists
+    const [existing] = await pool.query(
+      'SELECT id FROM universities WHERE id = ?',
+      [id]
+    );
 
-    if (result.affectedRows === 0) {
-      console.log(`University with ID ${id} not found for deletion.`);
-      return res.status(404).json({ message: 'University not found.' });
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'University not found' });
     }
 
-    console.log(`University with ID ${id} deleted successfully.`);
+    await pool.query('DELETE FROM universities WHERE id = ?', [id]);
     res.json({ message: 'University deleted successfully' });
   } catch (error) {
-    console.error('Error deleting university from database:', error);
-    res.status(500).json({ message: 'An unexpected error occurred while deleting the university.' });
+    console.error('Error deleting university:', error);
+    res.status(500).json({ message: 'Error deleting university' });
   }
 });
 

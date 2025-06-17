@@ -17,11 +17,14 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is logged in on mount
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('authToken')
     const storedUser = localStorage.getItem('user')
     
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser))
+      const parsedUser = JSON.parse(storedUser)
+      setUser(parsedUser)
+      // Set the token in the API headers
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
     }
     setLoading(false)
   }, [])
@@ -35,8 +38,11 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data;
       
       // Store token and user data
-      localStorage.setItem('token', token);
+      localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
+      
+      // Set the token in the API headers
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       // Update state
       setUser(user);
@@ -55,11 +61,18 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     // Clear local storage
-    localStorage.removeItem('token')
+    localStorage.removeItem('authToken')
     localStorage.removeItem('user')
+    
+    // Clear API headers
+    delete api.defaults.headers.common['Authorization']
     
     // Update state
     setUser(null)
+  }
+
+  const isAdmin = () => {
+    return user?.role === 'admin'
   }
 
   const value = {
@@ -68,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
+    isAdmin
   }
 
   return (
